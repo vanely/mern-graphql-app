@@ -33,7 +33,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      todo: ''
+      todo: '',
     };
   }
 
@@ -51,16 +51,15 @@ class App extends React.Component {
         // read cache data(our TodoQuery) for this query
         const data = store.readQuery({query: TodosQuery});
         // add mutation change
-        data.todos = data.todos.map((x) => { // since this method will be specific to the todo that I click do I even need to iterate over the todos or should I just make a direct change
-          if (x.id === todo.id) {
-            return {
+        data.todos = data.todos.map((x) =>  // since this method will be specific to the todo that I click do I even need to iterate over the todos or should I just make a direct change
+          x.id === todo.id 
+          ?
+            {
               ...todo,
               complete: !todo.complete,
-            };
-          } else {
-            return x;
-          }
-        });
+            }
+          : x
+        );
         // write data back to cache
         store.writeQuery({query: TodosQuery, data});
       }
@@ -99,8 +98,8 @@ class App extends React.Component {
           todos.map((todo) => {
             return (
               <div key={todo.id}>
-                <input onChange={ () => this.updateTodo(todo) } type="checkbox" name="complete" checked={todo.complete}/>
-                <strong style={{padding: '0 10px 0 10px'}}>{todo.text}</strong>
+                <input type="checkbox" name="complete" checked={todo.complete}/>
+                <strong onClick={() => this.updateTodo(todo)} style={{padding: '0 10px 0 10px'}}>{todo.text}</strong>
                 <span onClick={ () => this.removeTodo }>X</span>
               </div>
             )
@@ -112,7 +111,7 @@ class App extends React.Component {
 }
 
 // sends the queries and the component
-export default compose(
+export default compose( // compose was removed from react-apollo v3.x(use lodash.flowright instead)
   graphql(TodosQuery),
   graphql(UpdateMutation, {name: "updateTodo"}),
 )(App);
