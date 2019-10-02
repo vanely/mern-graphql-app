@@ -132,7 +132,7 @@ class App extends React.Component {
 // sends the queries and the component
 export default compose( // compose was removed from react-apollo v3.x(use lodash.flowright instead)
   graphql(TodosQuery),
-  graphql(CreateTodoMutation, {name: "createTodo"}),
+  graphql(CreateMutation, {name: "createTodo"}),
   graphql(UpdateMutation, {name: "updateTodo"}),
   graphql(RemoveMutation, {name: "removeTodo"}),
 )(App);
