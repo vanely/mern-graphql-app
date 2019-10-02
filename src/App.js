@@ -14,31 +14,37 @@ query {
   }
 }`;
 
-// const CreateMutation = gql`
-// mutation() {
-
-// }`;
+const CreateMutation = gql`
+mutation($text: String!) {
+  createTodo(text: $text) {
+    id
+    text
+    complete
+  }
+}`;
 
 const UpdateMutation = gql`
 mutation($id: ID!, $complete: Boolean!)  {
   updateTodo(id: $id, complete: $complete)
 }`;
 
-// const RemoveMutation = gql`
-// mutation($id: ID!) {
-//   removeTodo(id: $id)
-// }`;
+const RemoveMutation = gql`
+mutation($id: ID!) {
+  removeTodo(id: $id)
+}`;
 
 class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      todo: '',
-    };
-  }
-
-  addTodo = () => {
-
+  createTodo = async (text) => {
+    await this.props.createTodo({
+      variables: {
+        text,
+      },
+      update: (store, {data: {createTodo}}) => {
+        const data = store.readQuery({query: TodosQuery});
+        data.todos.unshift(createTodo);
+        store.writeQuery({query: TodosQuery, data});
+      }
+    });
   }
 
   updateTodo = async (todo) => {
@@ -46,8 +52,8 @@ class App extends React.Component {
       variables: {
         id: todo.id,
         complete: !todo.complete,
-      },
-      update: (store) => {
+      }, 
+      update: (store, {data: {updateTodo}}) => { // optional object with "data" property is what's returned after the update the value is the mutation being used
         // read cache data(our TodoQuery) for this query
         const data = store.readQuery({query: TodosQuery});
         // add mutation change
@@ -61,18 +67,31 @@ class App extends React.Component {
           : x
         );
         // write data back to cache
-        store.writeQuery({query: TodosQuery, data});
+        store.writeQuery({query: TodosQuery, data}); // possibly use a spread on data, or concat
       }
     });
   }
 
-  removeTodo = () => {
-
+  removeTodo = async (todo) => {
+    await this.props.removeTodo({
+      variables: {
+        id: todo.id,
+      },
+      update: (store, {data: {removeTodo}}) => {
+        const data = store.readQuery({query: TodosQuery});
+        data.todos = data.todos.filter((x) => x.id !== todo.id);
+        store.writeQuery({query: TodosQuery, data})
+      }
+    });
   }
 
   handleChange = (e) => {
     this.setState({[e.target.name]: e.target.value});
   } 
+
+  handleSubmit = (e) => {
+    e.preventDefault();
+  }
 
   render() {
     // props now have data coming from GraphQl query.
@@ -98,9 +117,9 @@ class App extends React.Component {
           todos.map((todo) => {
             return (
               <div key={todo.id}>
-                <input type="checkbox" name="complete" checked={todo.complete}/>
-                <strong onClick={() => this.updateTodo(todo)} style={{padding: '0 10px 0 10px'}}>{todo.text}</strong>
-                <span onClick={ () => this.removeTodo }>X</span>
+                <input onClick={() => this.updateTodo(todo)} defaultChecked={todo.complete} type="checkbox" name="complete" />
+                <strong style={{padding: '0 10px 0 10px'}}>{todo.text}</strong>
+                <button onClick={() => this.removeTodo(todo)}>X</button>
               </div>
             )
           })
@@ -113,5 +132,7 @@ class App extends React.Component {
 // sends the queries and the component
 export default compose( // compose was removed from react-apollo v3.x(use lodash.flowright instead)
   graphql(TodosQuery),
+  graphql(CreateTodoMutation, {name: "createTodo"}),
   graphql(UpdateMutation, {name: "updateTodo"}),
+  graphql(RemoveMutation, {name: "removeTodo"}),
 )(App);
